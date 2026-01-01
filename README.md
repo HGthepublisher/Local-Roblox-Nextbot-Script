@@ -22,4 +22,4 @@ If you're using this for any type of product like a game or a model, atleast put
 
 ### Loadstring
 Below is what you'd put for an injector, this is to make the code short so you don't have to paste all of it.
-loadstring("https://raw.githubusercontent.com/HGthepublisher/Local-Roblox-Nextbot-Script/refs/heads/main/RBLX%20Nextbot%20Base.lua")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HGthepublisher/Local-Roblox-Nextbot-Script/refs/heads/main/RBLX%20Nextbot%20Base.lua"))()
