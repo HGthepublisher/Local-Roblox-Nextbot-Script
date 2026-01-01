@@ -17,3 +17,9 @@ Getting banned from any game is entirely your fault.
 ### Dev Warning
 If you're using this script for professional use in Roblox Studio, I recommend repairing the script, as it's has a few major bugs that I might not be able to fix.
 I found out by testing.
+
+If you're using this for any type of product like a game or a model, atleast put me in the credits. :/
+
+### Loadstring
+Below is what you'd put for an injector, this is to make the code short so you don't have to paste all of it.
+loadstring("https://raw.githubusercontent.com/HGthepublisher/Local-Roblox-Nextbot-Script/refs/heads/main/RBLX%20Nextbot%20Base.lua")
