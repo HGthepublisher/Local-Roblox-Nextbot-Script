@@ -133,8 +133,8 @@ function CreateFollowPart()
 	followPart = newPart
 end
 
-function LoadAnimations(char)
-	local animator = char:FindFirstChildWhichIsA("Animator", true)
+function LoadAnimations()
+	local animator = humanoid:WaitForChild("Animator")
 	for name, info in pairs(animations) do
 		local anim = Instance.new("Animation")
 		anim.AnimationId = "rbxassetid://" .. info.id
@@ -170,7 +170,7 @@ function Load(char)
 	char.PrimaryPart = rootPart
 
 	CreateFollowPart()
-	LoadAnimations(char)
+	LoadAnimations()
 
 	loaded = true
 end
