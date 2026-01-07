@@ -4,12 +4,14 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local RS = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
+local PS = game:GetService("PhysicsService")
 
 local player = game.Players.LocalPlayer
 local character = nil
-local rootPart:Part = nil
+local rootPart = nil
 local camera = workspace.CurrentCamera
 local humanoid = nil
+local torso = nil
 
 local loaded = false
 local followPart: BasePart = nil
@@ -45,11 +47,15 @@ local cameraMode = player.CameraMode
 local disableScripts = {
 	"GrabbingScript",
 	"BobbingAndCrouch",
+	"Animate"
 }
 
 local cameraOffset = Vector3.new(0, 3, 0)
 
 local skin = 0.05
+
+local teleportDelayCurrent = 0
+local teleportDelay = 0.4
 
 -- Func --
 
@@ -60,6 +66,7 @@ function GetInputs()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = {character}
 		params.RespectCanCollide = true
+		params.CollisionGroup = torso.CollisionGroup
 		local result = workspace:Blockcast(followPart.CFrame, followPart.Size / 2, Vector3.new(0, -2.5, 0), params)
 		return result
 	end
@@ -77,13 +84,14 @@ function GetInputs()
 		return dir.Magnitude > 0 and dir.Unit or Vector3.zero
 	end
 
+	if UIS:GetFocusedTextBox() then return nil end
 	return {
 		jumping = UIS:IsKeyDown(Enum.KeyCode.Space),
 		sprinting = UIS:IsKeyDown(Enum.KeyCode.LeftShift),
 		moveDir = GetMoveDir(),
 		grounded = GetGrounded(),
 		attacking = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1),
-		teleporting = UIS:IsKeyDown(Enum.KeyCode.E),
+		teleporting = UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton3),
 	}
 end
 
@@ -153,6 +161,7 @@ function Load(char)
 	rootPart = char:WaitForChild("HumanoidRootPart")
 	humanoid = char:WaitForChild("Humanoid")
 	humanoid.Died:Connect(Unload)
+	torso = char:WaitForChild("Torso")
 
 	player.CameraMode = Enum.CameraMode.Classic
 	player.CameraMaxZoomDistance = 15
@@ -162,16 +171,20 @@ function Load(char)
 
 	CreateFollowPart()
 	LoadAnimations(char)
-	DisableScripts(char)
 
 	loaded = true
 end
 
 function Think(delta)
-	if not loaded or not followPart or not rootPart or not camera then return end
+	if not loaded or not followPart or not rootPart or not camera or not character or not torso then return end
 	attackCD -= delta
+	teleportDelayCurrent -= delta
+
+	DisableScripts(character)
 
 	local inputs = GetInputs()
+	if not inputs then return end
+	
 	local function GetSpeed()
 		local speed = inputs.sprinting and runspeed or walkspeed
 		return speed * 1.5
@@ -237,6 +250,8 @@ function Think(delta)
 		local params = RaycastParams.new()
 		params.FilterDescendantsInstances = {character}
 		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.CollisionGroup = torso.CollisionGroup
+		params.RespectCanCollide = true
 		
 		local result = workspace:Blockcast(followPart.CFrame + Vector3.new(0, stepheight / 2, 0), followPart.Size - Vector3.new(0, stepheight, 0), moveDelta, params)
 		if result then
@@ -294,6 +309,26 @@ function Think(delta)
 		local groundY = inputs.grounded.Position.Y - skin
 		local desiredY = groundY + (followPart.Size.Y / 2)
 		SetPartPosition(CFrame.new(followPart.Position.X, desiredY, followPart.Position.Z))
+	end
+	if (followPart.CFrame.Position - rootPart.CFrame.Position).Magnitude > 5 then
+		SetPartPosition(rootPart.CFrame + Vector3.new(0, 1, 0))
+	end
+	
+	if inputs.teleporting and teleportDelayCurrent <= 0 then
+		teleportDelayCurrent = teleportDelay
+		local mouse = UIS:GetMouseLocation()
+		local ray = camera:ViewportPointToRay(mouse.X, mouse.Y, 0)
+		
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = {character}
+		params.RespectCanCollide = true
+		params.CollisionGroup = torso.CollisionGroup
+		local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+		if result then
+			SetPartPosition(CFrame.new(result.Position + Vector3.new(0, 2.5, 0)))
+			currentVelocity = Vector3.new()
+		end
 	end
 
 	local look = camera.CFrame.LookVector
